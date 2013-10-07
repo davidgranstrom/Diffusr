@@ -10,8 +10,8 @@ Diffuser {
     var <srcGroup, <diffuserGroup, <mainGroup;
     var <isPlaying;
     // internal
-    var src, buses;
-    var curBuf, curSyn, bufSize;
+    var src, buses, bufSize;
+    var gBuf, gSyn, cursorPos;
 
     *new {|path, server|
         ^super.new.init(path, server);
@@ -75,9 +75,9 @@ Diffuser {
                     gate, doneAction:2
                 );
                 var o = VDiskIn.ar(
-                    d[\numChannels], 
-                    buf, 
-                    BufRateScale.kr(buf), 
+                    d[\numChannels],
+                    buf,
+                    BufRateScale.kr(buf),
                     loop
                 );
                 FreeSelfWhenDone.kr(o);
@@ -140,10 +140,15 @@ Diffuser {
         }).add;
     }
 
-    counter {
-        var sr = server.sampleRate;
+    counter {|sampleRate, numFrames, frameOffset=0|
+        var updateRate = 1/25;     // 25fps
+        numFrames = numFrames + 1; // last sample
         ^Routine {
-            loop {
+            inf.do {|i|
+                var c = frameOffset + (i*updateRate*sampleRate);
+                c = c.asInteger % numFrames;
+                this.changed(\cursorPos, cursorPos = c);
+                updateRate.wait;
             }
         }
     }
@@ -161,12 +166,12 @@ Diffuser {
                 srcGroup,
                 ("diffuser_" ++ key).asSymbol,
                 [\buf, buf]
-            ).onFree { 
+            ).onFree {
                 buf.close; buf.free;
                 isPlaying = false;
             };
-            curSyn = syn;
-            curBuf = buf;
+            gSyn = syn;
+            gBuf = buf;
         };
         isPlaying  = true;
     }
@@ -175,11 +180,11 @@ Diffuser {
 
     stop {
         if(isPlaying) {
-            curSyn.release;
-            curBuf.close;
-            curBuf.free;
-            curBuf    = nil;
-            curSyn    = nil;
+            gSyn.release;
+            gBuf.close;
+            gBuf.free;
+            gBuf      = nil;
+            gSyn      = nil;
             isPlaying = false;
         }
     }
