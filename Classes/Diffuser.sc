@@ -11,7 +11,7 @@ Diffuser {
     var <isPlaying;
     // internal
     var src, buses, bufSize;
-    var gBuf, gSyn, cursorPos;
+    var gBuf, gSyn, gCounter, cursorPos;
 
     *new {|path, server|
         ^super.new.init(path, server);
@@ -153,27 +153,35 @@ Diffuser {
         }
     }
 
-    play {|time|
+    play {|offset=0|
         var path, buf, syn, numChannels;
         var key = src ?? { "No source file assigned.".throw };
-        key     = PathName(key).fileNameWithoutExtension.asSymbol;
-        path    = library[key][\path];
-        numChannels = library[key][\numChannels];
-        forkIfNeeded {
-            buf = Buffer.cueSoundFile(server, path, time, numChannels, bufSize);
-            server.sync;
-            syn = Synth.head(
-                srcGroup,
-                ("diffuser_" ++ key).asSymbol,
-                [\buf, buf]
-            ).onFree {
-                buf.close; buf.free;
-                isPlaying = false;
+        if(isPlaying.not) {
+            key     = PathName(key).fileNameWithoutExtension.asSymbol;
+            path    = library[key][\path];
+            numChannels = library[key][\numChannels];
+            forkIfNeeded {
+                buf = Buffer.cueSoundFile(server, path, time, numChannels, bufSize);
+                server.sync;
+                syn = Synth.head(
+                    srcGroup,
+                    ("diffuser_" ++ key).asSymbol,
+                    [\buf, buf]
+                ).onFree {
+                    buf.close; buf.free;
+                    cursorPos = nil;
+                    isPlaying = false;
+                };
+                gCounter = this.counter(
+                    library[key][\sampleRate], 
+                    library[key][\numFrames],
+                    offset * library[key][\sampleRate]
+                ).play(AppClock);
+                gSyn  = syn;
+                gBuf  = buf;
             };
-            gSyn = syn;
-            gBuf = buf;
-        };
-        isPlaying  = true;
+            isPlaying = true;
+        }
     }
 
     pause {}
@@ -181,10 +189,12 @@ Diffuser {
     stop {
         if(isPlaying) {
             gSyn.release;
+            gCounter.stop;
             gBuf.close;
             gBuf.free;
             gBuf      = nil;
             gSyn      = nil;
+            gCounter  = nil;
             isPlaying = false;
         }
     }
