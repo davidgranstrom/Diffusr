@@ -78,8 +78,11 @@ DifLib {
     }
 
     files {
+        var l;
         if(library.isEmpty.not) {
-            library.keysDo(_.postln);
+            l = List[];
+            library.keysDo(l.add(_));
+            ^l;
         } {
             "No files in library.".postln;
         }
