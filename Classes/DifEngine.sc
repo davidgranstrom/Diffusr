@@ -18,7 +18,7 @@ DifEngine : DifLib {
     }
 
     init {|argPath, argServer|
-        server        = argServer ?? Server.default;
+        server        = argServer ? Server.default;
         ctrlDict      = ();
         buses         = List[];
         isPlaying     = false;
@@ -48,16 +48,8 @@ DifEngine : DifLib {
             d.put(\srcBus, Bus.audio(server, d[\numChannels]));
             buses.add(d[\srcBus]); // cleanup
             SynthDef(("diffuser_" ++ name).asSymbol, {|out, buf, gate=1, loop=0|
-                var env = EnvGen.kr(
-                    Env.asr(0.05, 1, 0.05, \sine),
-                    gate, doneAction:2
-                );
-                var o = VDiskIn.ar(
-                    d[\numChannels],
-                    buf,
-                    BufRateScale.kr(buf),
-                    loop
-                );
+                var env = EnvGen.kr(Env.asr(0.05, 1, 0.05, \sine), gate, doneAction:2);
+                var o = VDiskIn.ar(d[\numChannels], buf, BufRateScale.kr(buf), loop);
                 FreeSelfWhenDone.kr(o);
                 Out.ar(out, env * o);
             }).add;
@@ -131,6 +123,10 @@ DifEngine : DifLib {
         }
     }
 
+    bus {
+        ^library[source][\srcBus];
+    }
+
     play {
         var path, buf, syn, numChannels;
         var key = source ?? { "No source assigned.".throw };
@@ -143,7 +139,7 @@ DifEngine : DifLib {
                 syn = Synth.head(
                     srcGroup,
                     ("diffuser_" ++ key).asSymbol,
-                    [\buf, buf]
+                    [\buf, buf, \out, library[key][\srcBus]]
                 ).onFree {
                     buf.close; buf.free;
                     isPlaying = false;
