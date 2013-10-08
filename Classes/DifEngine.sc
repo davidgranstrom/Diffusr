@@ -167,7 +167,6 @@ DifEngine : DifLib {
     }
 
     pause {
-        cursorPos.debug("cursorPos");
         if(isPlaying) {
             gSyn.release;
             gCounter.stop;
