@@ -161,7 +161,7 @@ Diffuser {
             path    = library[key][\path];
             numChannels = library[key][\numChannels];
             forkIfNeeded {
-                buf = Buffer.cueSoundFile(server, path, time, numChannels, bufSize);
+                buf = Buffer.cueSoundFile(server, path, offset, numChannels, bufSize);
                 server.sync;
                 syn = Synth.head(
                     srcGroup,
