@@ -8,6 +8,10 @@ DifLib {
 
     classvar <library;
 
+    *initClass {
+        library = ();
+    }
+
     *new {|path|
         ^super.new.init(path);
     }
@@ -32,7 +36,6 @@ DifLib {
     }
 
     init {|path|
-        library = library ? (); 
         path !? { this.add(path) };
     }
 
