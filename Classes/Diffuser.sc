@@ -1,75 +1,53 @@
 // =============================================================================
-// Title         : Diffuser
-// Description   : Playback engine and audio processing
+// Title         : DifEngine
+// Description   : Playback engine and audio processor
 // Copyright (c) : David Granstrom 2013
 // =============================================================================
 
-Diffuser {
+DifEngine : DifLib {
 
-    var server, <library, <ctrlDict;
+    var server, <>source, <ctrlDict;
     var <srcGroup, <diffuserGroup, <mainGroup;
     var <isPlaying;
     // internal
-    var src, buses, bufSize;
+    var buses, bufSize;
     var gBuf, gSyn, gCounter, cursorPos;
 
     *new {|path, server|
         ^super.new.init(path, server);
     }
 
-    init {|argSrc, argServer|
+    init {|argPath, argServer|
         server        = argServer ?? Server.default;
-        srcGroup      = Group.new(server);
-        diffuserGroup = Group.after(srcGroup);
-        mainGroup     = Group.after(diffuserGroup);
-        library       = ();
         ctrlDict      = ();
         buses         = List[];
         isPlaying     = false;
         bufSize       = 2**19;
-        argSrc !? { this.source = argSrc };
+        if(library.isEmpty.not) {
+            DifLib().files.do(this.prepare(_));
+        } {
+            argPath !? { 
+                var name = PathName(argPath).fileNameWithoutExtension.asSymbol;
+                var d = DifLib(argPath);
+                this.prepare(name);
+                source = name;
+            };
+        };
         server.waitForBoot {
-            this.makeDefs;
+            srcGroup      = Group.new(server);
+            diffuserGroup = Group.after(srcGroup);
+            mainGroup     = Group.after(diffuserGroup);
             server.sync;
+            this.makeDefs;
         };
     }
 
-    open {
-        Dialog.openPanel({|paths|
-            paths.do(this.prepare(_));
-        }, multipleSelection:true);
-    }
-
-    source {
-        ^src;
-    }
-
-    source_ {|path|
-        if(path.isString.not) {
-            path.do(this.prepare(_));
-            src = path.first;
-        } {
-            this.prepare(path);
-            src = path;
-        }
-    }
-
-    prepare {|src|
-        var key = PathName(src).fileNameWithoutExtension.asSymbol;
-        src = src.standardizePath;
-        library.put(key, (path: src));
-        SoundFile.use(src, {|f|
-            var d = library[key];
-            d.add(\numFrames    -> f.numFrames);
-            d.add(\sampleRate   -> f.sampleRate);
-            d.add(\numChannels  -> f.numChannels);
-            d.add(\headerFormat -> f.headerFormat);
-        });
+    prepare {|name|
         forkIfNeeded {
-            var d = library[key];
+            var d = library[name];
             d.put(\srcBus, Bus.audio(server, d[\numChannels]));
             buses.add(d[\srcBus]); // cleanup
-            SynthDef(("diffuser_" ++ key).asSymbol, {|out, buf, gate=1, loop=0|
+            SynthDef(("diffuser_" ++ name).asSymbol, {|out, buf, gate=1, loop=0|
                 var env = EnvGen.kr(
                     Env.asr(0.05, 1, 0.05, \sine),
                     gate, doneAction:2
@@ -153,15 +131,14 @@ Diffuser {
         }
     }
 
-    play {|offset=0|
+    play {
         var path, buf, syn, numChannels;
-        var key = src ?? { "No source file assigned.".throw };
+        var key = source ?? { "No source assigned.".throw };
         if(isPlaying.not) {
-            key     = PathName(key).fileNameWithoutExtension.asSymbol;
-            path    = library[key][\path];
+            path        = library[key][\path];
             numChannels = library[key][\numChannels];
             forkIfNeeded {
-                buf = Buffer.cueSoundFile(server, path, offset, numChannels, bufSize);
+                buf = Buffer.cueSoundFile(server, path, cursorPos ? 0, numChannels, bufSize);
                 server.sync;
                 syn = Synth.head(
                     srcGroup,
@@ -169,30 +146,42 @@ Diffuser {
                     [\buf, buf]
                 ).onFree {
                     buf.close; buf.free;
-                    cursorPos = nil;
                     isPlaying = false;
                 };
                 gCounter = this.counter(
                     library[key][\sampleRate], 
                     library[key][\numFrames],
-                    offset * library[key][\sampleRate]
+                    cursorPos ? 0
                 ).play(AppClock);
                 gSyn  = syn;
-                gBuf  = buf;
             };
             isPlaying = true;
         }
     }
 
-    pause {}
+    seek {|time="00:00"|
+        var newTime;
+        time      = time.split($:).asInteger;
+        newTime   = (60*time[0]) + time[1];
+        cursorPos = newTime * library[source][\sampleRate];
+    }
+
+    pause {
+        cursorPos.debug("cursorPos");
+        if(isPlaying) {
+            gSyn.release;
+            gCounter.stop;
+            gSyn      = nil;
+            gCounter  = nil;
+            isPlaying = false;
+        }
+    }
 
     stop {
         if(isPlaying) {
             gSyn.release;
             gCounter.stop;
-            gBuf.close;
-            gBuf.free;
-            gBuf      = nil;
+            cursorPos = nil;
             gSyn      = nil;
             gCounter  = nil;
             isPlaying = false;
