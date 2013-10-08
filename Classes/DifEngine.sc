@@ -127,6 +127,10 @@ DifEngine : DifLib {
         ^library[source][\srcBus];
     }
 
+    numChannels {
+        ^library[source][\numChannels];
+    }
+
     play {
         var path, buf, syn, numChannels;
         var key = source ?? { "No source assigned.".throw };
