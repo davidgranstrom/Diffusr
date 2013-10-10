@@ -10,8 +10,8 @@ DifEngine : DifLib {
     var <srcGroup, <diffuserGroup, <mainGroup;
     var <isPlaying;
     // internal
-    var buses, bufSize;
-    var gBuf, gSyn, gCounter, cursorPos;
+    var buses, bufSize, processors;
+    var gSyn, gCounter, cursorPos;
 
     *new {|path, server|
         ^super.new.init(path, server);
@@ -23,6 +23,9 @@ DifEngine : DifLib {
         buses         = List[];
         isPlaying     = false;
         bufSize       = 2**19;
+        processors    = [ "bpf", "lpf", "hpf", "rm," "rev" ].collect{|str|
+            ("dif_" ++ str).asSymbol;
+        };
         if(library.isEmpty.not) {
             DifLib().files.do(this.prepare(_));
         } {
@@ -70,13 +73,7 @@ DifEngine : DifLib {
         // processors
         // ---------------------------------------------------------------------
         [
-            [
-                \diffuser_bpf,
-                \diffuser_lpf,
-                \diffuser_hpf,
-                \diffuser_rm,
-                \diffuser_rev,
-            ],
+            processors,
             [
                 {|x, cfreq=1000, rq=0.8| BPF.ar(x, cfreq, rq) },
                 {|x, cfreq=1000| LPF.ar(x, cfreq)             },
