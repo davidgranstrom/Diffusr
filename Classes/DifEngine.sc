@@ -42,6 +42,8 @@ DifEngine : DifLib {
             mainGroup     = Group.after(diffuserGroup);
             server.sync;
             this.makeDefs;
+            server.sync;
+            this.makeEvents;
         };
     }
 
@@ -85,15 +87,28 @@ DifEngine : DifLib {
                 }
             ]
         ].flopWith {|name, func|
-            SynthDef(name, {|in, amp, gate=1, atk=0.05, rel=0.05|
-                var xfade = EnvGen.kr(
+            SynthDef(name, {|out, src, in, amp, gate=1, atk=0.05, rel=0.05|
+                var env = EnvGen.kr(
                     Env.asr(atk, 1, rel, \sine),
                     gate, doneAction:2
                 );
-                var o = In.ar(in, 1);
+                var o = In.ar(src, 1);
                 o = SynthDef.wrap(func, nil, o);
-                XOut.ar(in, xfade, amp * o);
+                Out.ar(out, env * amp * o);
             }).add;
+        };
+    makeEvents {
+        var bus   = this.bus.index;
+        var group = diffuserGroup;
+        processors.do {|type|
+            Event.addEventType(type, {|server|
+                // srv = server;
+                ~instrument = type;
+                ~group      = group;
+                ~src        = bus + ~in;
+                ~type       = \note;
+                currentEnvironment.play;
+            });
         };
     }
 
