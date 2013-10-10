@@ -63,17 +63,12 @@ DifEngine : DifLib {
 
     makeDefs {
         // plain vanilla
-        SynthDef(\diffuser_plain, {|out, in, amp, gate=1, atk=0.05, rel=0.05|
-            var env = EnvGen.kr(
-                Env.asr(atk, 1, rel, \sine),
-                gate, doneAction:2
-            );
-            var o = In.ar(in, 1);
-            Out.ar(out, amp * o);
+        SynthDef(\dif_plain, {|out, src, amp, gate=1, atk=0.05, rel=0.05|
+            var env = EnvGen.kr(Env.asr(atk, 1, rel, \sine), gate, doneAction:2);
+            var o = In.ar(src, 1);
+            Out.ar(out, env * amp * o);
         }).add;
-        // ---------------------------------------------------------------------
         // processors
-        // ---------------------------------------------------------------------
         [
             processors,
             [
@@ -87,20 +82,19 @@ DifEngine : DifLib {
                 }
             ]
         ].flopWith {|name, func|
-            SynthDef(name, {|out, src, in, amp, gate=1, atk=0.05, rel=0.05|
-                var env = EnvGen.kr(
-                    Env.asr(atk, 1, rel, \sine),
-                    gate, doneAction:2
-                );
+            SynthDef(name, {|out, src, amp, gate=1, atk=0.05, rel=0.05|
+                var env = EnvGen.kr(Env.asr(atk, 1, rel, \sine), gate, doneAction:2);
                 var o = In.ar(src, 1);
                 o = SynthDef.wrap(func, nil, o);
                 Out.ar(out, env * amp * o);
             }).add;
         };
+    }
+
     makeEvents {
         var bus   = this.bus.index;
         var group = diffuserGroup;
-        processors.do {|type|
+        [ processors ++ \dif_plain ].do {|type|
             Event.addEventType(type, {|server|
                 // srv = server;
                 ~instrument = type;
