@@ -1,0 +1,67 @@
+TITLE:: DifEngine
+SUMMARY:: Audio File Player
+RELATED:: Classes/DifLib
+
+DESCRIPTION::
+EMPHASIS::DifEngine:: is a playback engine which can play audiofiles from link::Classes/DifLib::. The class makes use of DifLib internally, so one does not have to use DifLib directly (although recommended) to make use of it. EMPHASIS::DifEngine:: supplies standard playback controls such as TELETYPE::play, pause, seek and stop::.
+
+The reason to use EMPHASIS::DifEngine:: when playing back audio files is to simplify strong::algorithmic loudspeaker diffusion::. EMPHASIS::DifEngine:: does not handle any speaker assignments by itself, but creates an environment where one can easily work with any type of sound source and distribute it in an arbitrary number of speakers. It does this by suppling a couple of STRONG::custom event types:: and some pre-defined SynthDefs (called processors) which can be used to diffuse the source. See the examples section for a more in-depth explanation.
+
+EMPHASIS::DifEngine:: inhertis from link::DifLib:: so it can be useful to take a look at its documentation.
+
+CLASSMETHODS::
+
+method::new
+Creates a new instance.
+argument::path
+A path to an audio file.
+argument::server
+A server instance (will use Server.default if not supplied).
+
+INSTANCEMETHODS::
+
+private::init,prepare,makeDefs,makeEvents,makePanner,counter
+
+method::source
+Set or get the source file.
+discussion::
+DifEngine operates on a single file at a time. You have to assign a source explicitly for it to know which file to operate on. Use a symbol constructed from the file name to define a source.
+code::
+// first, populate the library
+DifLib.newFromDir(Platform.resourceDir);
+
+d = DifEngine();
+// inherited method from DifLib
+d.files; // List[ a11wlk01, a11wlk01-44_1, SinedPink ]
+d.source = 'a11wlk01';
+::
+
+method::play
+Plays the source file on an internal bus.
+
+method::seek
+Skip to a place in the source file.
+discussion::
+code:: d.seek("04:12"); // will start playback from this time ::
+
+method::pause
+Pause playback.
+
+method::stop
+Stop playback.
+
+method::free
+Free all server objects. Cleanup.
+
+method::bus
+Get the source bus.
+
+method::numChannels
+Get the number of channels in the source.
+
+method::srcGroup
+Get the source group. This is where the source synth go.
+
+method::diffuserGroup
+Get the diffuser group. This is where all processors go.
+
