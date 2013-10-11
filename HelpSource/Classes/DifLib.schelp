@@ -1,0 +1,75 @@
+CLASS:: DifLib
+summary:: Storage for audio file metadata
+related:: Classes/Dictionary, Classes/SoundFile
+categories:: Collections>Unordered
+
+DESCRIPTION::
+DifLib functions as a global container for audio
+file metadata. It has different methods for adding
+new audio files to its library, and also the ability to save and
+load libraries.
+
+CLASSMETHODS::
+
+private:: initClass
+
+subsection::Class variables
+
+method::library
+Global dictionary modifiable by all instances.
+
+subsection::Creation methods
+
+method::new
+Creates a new instance and adds an audiofile to
+the library.
+
+argument::path
+Path to an audiofile.
+
+method::newFromDir
+Creates a new instance and populates the library
+with audiofiles from the supplied path recursively.
+argument::dir
+Path to a directory.
+
+method::newFromFile
+Creates a new instance and restores a previously
+saved session.
+argument::file
+Path to a saved library file.
+
+INSTANCEMETHODS::
+
+private::add,init
+
+method::load
+Restores a previously saved session.
+argument::path
+Path to a saved library file.
+
+method::save
+Saves the current library to disk.
+argument::path
+Path to where the file will be written. If no path
+is supplied it defaults to
+link::Classes/Platform#-userAppSupportDir:: with
+the current date as the file name prepended with
+"diflib_".
+
+method::open
+Opens a file system dialog where one or multiple
+audiofiles can be selected and added to the
+library.
+
+method::files
+Prints a list of all files currently stored in the
+library.
+
+method::metadata
+Prints formated output of all metadata for the files
+in the library.
+
+method::purge
+Deletes the library and replaces it with an empty one.
+
