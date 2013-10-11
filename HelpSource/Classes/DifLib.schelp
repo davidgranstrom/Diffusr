@@ -1,7 +1,7 @@
-CLASS:: DifLib
-summary:: Storage for audio file metadata
-related:: Classes/Dictionary, Classes/SoundFile
-categories:: Collections>Unordered
+TITLE:: DifLib
+SUMMARY:: Storage for audio file metadata
+RELATED:: Classes/Dictionary, Classes/SoundFile
+CATEGORIES:: Collections>Unordered
 
 DESCRIPTION::
 DifLib functions as a global container for audio
