@@ -152,9 +152,10 @@ DifEngine : DifLib {
         ^library[src][\numChannels];
     }
 
-    play {
+    play {|internalRouting=true|
         var path, buf, syn, numChannels;
         var key = src ?? { "No source assigned.".throw };
+        var out = if(internalRouting) { library[key][\srcBus] } { 0 };
         if(isPlaying.not) {
             path        = library[key][\path];
             numChannels = library[key][\numChannels];
@@ -164,7 +165,7 @@ DifEngine : DifLib {
                 syn = Synth.head(
                     srcGroup,
                     ("diffuser_" ++ key).asSymbol,
-                    [\buf, buf, \out, library[key][\srcBus]]
+                    [\buf, buf, \out, out]
                 ).onFree {
                     buf.close; buf.free;
                     isPlaying = false;
