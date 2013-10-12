@@ -24,7 +24,7 @@ DifEngine : DifLib {
         buses         = List[];
         isPlaying     = false;
         bufSize       = 2**19;
-        processors    = [ "bpf", "lpf", "hpf", "rm," "rev" ].collect{|str|
+        processors    = [ "bpf", "lpf", "hpf", "rm", "rev" ].collect{|str|
             ("dif_" ++ str).asSymbol;
         };
         if(library.isEmpty.not) {
