@@ -94,7 +94,7 @@ DifEngine : DifLib {
     makeEvents {
         var bus   = this.bus.index;
         var group = diffuserGroup;
-        [ processors ++ \dif_plain ].do {|type|
+        (processors ++ \dif_plain).do {|type|
             Event.addEventType(type, {|server|
                 // srv = server;
                 ~instrument = type;
