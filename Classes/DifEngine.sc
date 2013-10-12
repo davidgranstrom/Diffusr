@@ -27,17 +27,18 @@ DifEngine : DifLib {
         processors    = [ "bpf", "lpf", "hpf", "rm", "rev" ].collect{|str|
             ("dif_" ++ str).asSymbol;
         };
-        if(library.isEmpty.not) {
-            DifLib().files.do(this.prepare(_));
-        } {
-            argPath !? { 
-                var name = PathName(argPath).fileNameWithoutExtension.asSymbol;
-                var d = DifLib(argPath);
-                this.prepare(name);
-                singlePath = name;
+        forkIfNeeded {
+            server.bootSync; // boot
+            if(library.isEmpty.not) {
+                DifLib().files.do(this.prepare(_));
+            } {
+                argPath !? { 
+                    var name = PathName(argPath).fileNameWithoutExtension.asSymbol;
+                    var d = DifLib(argPath);
+                    this.prepare(name);
+                    singlePath = name;
+                };
             };
-        };
-        server.waitForBoot {
             srcGroup      = Group.new(server);
             diffuserGroup = Group.after(srcGroup);
             mainGroup     = Group.after(diffuserGroup);
