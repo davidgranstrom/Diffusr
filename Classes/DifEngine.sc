@@ -145,16 +145,16 @@ DifEngine : DifLib {
     }
 
     bus {
-        ^library[this.source][\srcBus];
+        ^library[src][\srcBus];
     }
 
     numChannels {
-        ^library[this.source][\numChannels];
+        ^library[src][\numChannels];
     }
 
     play {
         var path, buf, syn, numChannels;
-        var key = this.source ?? { "No source assigned.".throw };
+        var key = src ?? { "No source assigned.".throw };
         if(isPlaying.not) {
             path        = library[key][\path];
             numChannels = library[key][\numChannels];
@@ -184,7 +184,7 @@ DifEngine : DifLib {
         var newTime;
         time      = time.split($:).asInteger;
         newTime   = (60*time[0]) + time[1];
-        cursorPos = newTime * library[this.source][\sampleRate];
+        cursorPos = newTime * library[src][\sampleRate];
     }
 
     pause {
