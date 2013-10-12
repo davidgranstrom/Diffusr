@@ -6,11 +6,11 @@
 
 DifEngine : DifLib {
 
-    var server, <>source, <ctrlDict;
+    var server, <ctrlDict;
     var <srcGroup, <diffuserGroup, <mainGroup;
     var <isPlaying;
     // internal
-    var buses, bufSize, processors;
+    var buses, src, bufSize, processors;
     var gSyn, gCounter, cursorPos;
 
     *new {|path, server|
@@ -18,6 +18,7 @@ DifEngine : DifLib {
     }
 
     init {|argPath, argServer|
+        var singlePath;
         server        = argServer ? Server.default;
         ctrlDict      = ();
         buses         = List[];
@@ -33,7 +34,7 @@ DifEngine : DifLib {
                 var name = PathName(argPath).fileNameWithoutExtension.asSymbol;
                 var d = DifLib(argPath);
                 this.prepare(name);
-                source = name;
+                singlePath = name;
             };
         };
         server.waitForBoot {
@@ -43,8 +44,8 @@ DifEngine : DifLib {
             server.sync;
             this.makeDefs;
             server.sync;
-            this.makeEvents;
         };
+        if(singlePath.notNil) { this.source = singlePath };
     }
 
     prepare {|name|
@@ -129,17 +130,33 @@ DifEngine : DifLib {
         }
     }
 
+    source {
+        ^src;
+    }
+
+    source_ {|aSource|
+        var result;
+        aSource = aSource.asSymbol; // cast it just to make sure
+        result  = library[aSource];
+        if(result.notNil) {
+            src = aSource;
+            this.makeEvents;
+        } {
+            "Not a valid name, must match a file in the library".throw;
+        };
+    }
+
     bus {
-        ^library[source][\srcBus];
+        ^library[this.source][\srcBus];
     }
 
     numChannels {
-        ^library[source][\numChannels];
+        ^library[this.source][\numChannels];
     }
 
     play {
         var path, buf, syn, numChannels;
-        var key = source ?? { "No source assigned.".throw };
+        var key = this.source ?? { "No source assigned.".throw };
         if(isPlaying.not) {
             path        = library[key][\path];
             numChannels = library[key][\numChannels];
@@ -169,7 +186,7 @@ DifEngine : DifLib {
         var newTime;
         time      = time.split($:).asInteger;
         newTime   = (60*time[0]) + time[1];
-        cursorPos = newTime * library[source][\sampleRate];
+        cursorPos = newTime * library[this.source][\sampleRate];
     }
 
     pause {
