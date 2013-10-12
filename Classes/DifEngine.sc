@@ -49,17 +49,15 @@ DifEngine : DifLib {
     }
 
     prepare {|name|
-        forkIfNeeded {
-            var d = library[name];
-            d.put(\srcBus, Bus.audio(server, d[\numChannels]));
-            buses.add(d[\srcBus]); // cleanup
-            SynthDef(("diffuser_" ++ name).asSymbol, {|out, buf, gate=1, loop=0|
-                var env = EnvGen.kr(Env.asr(0.05, 1, 0.05, \sine), gate, doneAction:2);
-                var o = VDiskIn.ar(d[\numChannels], buf, BufRateScale.kr(buf), loop);
-                FreeSelfWhenDone.kr(o);
-                Out.ar(out, env * o);
-            }).add;
-        }
+        var d = library[name];
+        d.put(\srcBus, Bus.audio(server, d[\numChannels]));
+        buses.add(d[\srcBus]); // cleanup
+        SynthDef(("diffuser_" ++ name).asSymbol, {|out, buf, gate=1, loop=0|
+            var env = EnvGen.kr(Env.asr(0.05, 1, 0.05, \sine), gate, doneAction:2);
+            var o = VDiskIn.ar(d[\numChannels], buf, BufRateScale.kr(buf), loop);
+            FreeSelfWhenDone.kr(o);
+            Out.ar(out, env * o);
+        }).add;
     }
 
     makeDefs {
@@ -142,7 +140,7 @@ DifEngine : DifLib {
             src = aSource;
             this.makeEvents;
         } {
-            "Not a valid name, must match a file in the library".throw;
+            "Not a valid source name, must match a file in the library".throw;
         };
     }
 
