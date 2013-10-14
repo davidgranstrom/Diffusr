@@ -8,10 +8,9 @@ DifEngine : DifLib {
 
     var server, <ctrlDict;
     var <srcGroup, <diffuserGroup, <mainGroup;
-    var <isPlaying;
     // internal
     var buses, src, bufSize, processors;
-    var gSyn, gCounter, cursorPos;
+    var gSyn, gCounter, cursorPos, playing;
 
     *new {|path, server|
         ^super.new.init(path, server);
@@ -145,6 +144,17 @@ DifEngine : DifLib {
         };
     }
 
+    isPlaying {
+        ^playing;
+    }
+
+    isPlaying_ {|bool|
+        playing = bool;
+        defer {
+            this.changed(\isPlaying, playing);
+        }
+    }
+
     bus {
         ^library[src][\srcBus];
     }
@@ -157,7 +167,7 @@ DifEngine : DifLib {
         var path, buf, syn, numChannels;
         var key = src ?? { "No source assigned.".throw };
         var out = if(internalRouting) { library[key][\srcBus] } { 0 };
-        if(isPlaying.not) {
+        if(this.isPlaying.not) {
             path        = library[key][\path];
             numChannels = library[key][\numChannels];
             forkIfNeeded {
@@ -169,7 +179,7 @@ DifEngine : DifLib {
                     [\buf, buf, \out, out]
                 ).onFree {
                     buf.close; buf.free;
-                    isPlaying = false;
+                    this.isPlaying = false;
                 };
                 gCounter = this.counter(
                     library[key][\sampleRate], 
@@ -178,7 +188,7 @@ DifEngine : DifLib {
                 ).play(AppClock);
                 gSyn  = syn;
             };
-            isPlaying = true;
+            this.isPlaying = true;
         }
     }
 
@@ -190,23 +200,23 @@ DifEngine : DifLib {
     }
 
     pause {
-        if(isPlaying) {
+        if(this.isPlaying) {
             gSyn.release;
             gCounter.stop;
             gSyn      = nil;
             gCounter  = nil;
-            isPlaying = false;
+            this.isPlaying = false;
         }
     }
 
     stop {
-        if(isPlaying) {
+        if(this.isPlaying) {
             gSyn.release;
             gCounter.stop;
             cursorPos = nil;
             gSyn      = nil;
             gCounter  = nil;
-            isPlaying = false;
+            this.isPlaying = false;
         }
     }
 
