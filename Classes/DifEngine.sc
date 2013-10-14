@@ -128,6 +128,14 @@ DifEngine : DifLib {
         }
     }
 
+    position {
+        ^cursorPos;
+    }
+
+    position_ {|frames|
+        cursorPos = frames;
+    }
+
     source {
         ^src;
     }
