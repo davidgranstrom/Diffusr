@@ -88,7 +88,7 @@ DifLib {
         }
     }
 
-    metadata {
+    print {
         if(library.isEmpty.not) {
             library.keysValuesDo {|key, val| 
                 "o- NAME: \"%\"\n".postf(key);
