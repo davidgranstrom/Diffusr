@@ -13,17 +13,17 @@ DifEngine : DifLib {
     var gSyn, gCounter, cursorPos, playing;
 
     *new {|path, server|
-        ^super.new.init(path, server);
+        ^super.new.initDifEngine(path, server);
     }
 
-    init {|argPath, argServer|
+    initDifEngine {|argPath, argServer|
         var singlePath;
-        server        = argServer ? Server.default;
-        ctrlDict      = ();
-        buses         = List[];
-        isPlaying     = false;
-        bufSize       = 2**19;
-        processors    = [ "bpf", "lpf", "hpf", "rm", "rev" ].collect{|str|
+        server         = argServer ? Server.default;
+        ctrlDict       = ();
+        buses          = List[];
+        bufSize        = 2**19;
+        this.isPlaying = false;
+        processors     = [ "bpf", "lpf", "hpf", "rm", "rev" ].collect{|str|
             ("dif_" ++ str).asSymbol;
         };
         forkIfNeeded {
