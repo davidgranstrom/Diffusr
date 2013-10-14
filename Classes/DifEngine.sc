@@ -217,6 +217,9 @@ DifEngine : DifLib {
             gSyn      = nil;
             gCounter  = nil;
             this.isPlaying = false;
+            defer { 
+                this.changed(\hasStopped, true) 
+            };
         }
     }
 
