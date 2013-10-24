@@ -9,8 +9,9 @@ DifGui : DifEngine {
     var model;
     var <>onPlay, <>onStop;
     var playBtn, stopBtn, seekFwdBtn, seekBckBtn;
+    var timeCounter, frameCounter;
     var playlist, openBtn, mVolKnob;
-    var window, sfView, sf;
+    var window, sfView, sf, curSR;
     var colors;
 
     *new {|aModel|
@@ -30,12 +31,21 @@ DifGui : DifEngine {
             border:     Color.grey(0.2, 1),
         );
 
+        curSR = library[model.source][\sampleRate];
+
         SimpleController(model)
         .put(\isPlaying, {|changer, what, bool|
             playBtn.value = bool;
         })
         .put(\cursorPos, {|changer, what, pos|
-            sfView.cursorPos = pos;
+            sfView.timeCursorPosition = pos;
+            defer { 
+                timeCounter.string_((pos/curSR).asTimeString); 
+                frameCounter.string_(pos); 
+            }
+        })
+        .put(\hasStopped, {
+            sfView.timeCursorPosition = 0;
         });
         this.updateView;
         this.draw;
@@ -53,6 +63,7 @@ DifGui : DifEngine {
     }
 
     transportView {
+        var timeCounterView, frameCounterView;
         var v = View();
         seekBckBtn = Button()
         .states_([ [ "<<", Color.black, colors[\buttonBg]] ])
@@ -84,8 +95,23 @@ DifGui : DifEngine {
             model.stop; 
             onStop !? { onStop.value }
         });
+        timeCounterView = View().background_(colors[\sectionBg]).layout_(
+            HLayout(
+                StaticText().string_("Time"),
+                timeCounter = StaticText().string_(try { model.position.asTimeString } { 0.asTimeString })
+            )
+        );
+        frameCounterView = View().background_(colors[\sectionBg]).layout_(
+            HLayout(
+                StaticText().string_("Frames"),
+                frameCounter = StaticText().string_(try { model.position } { 0 })
+            )
+        );
         v.layout_(
-            HLayout(seekBckBtn, playBtn, stopBtn)
+            VLayout(
+                HLayout(seekBckBtn, playBtn, stopBtn),
+                HLayout(timeCounterView, frameCounterView)
+            );
         );
         ^v;
     }
@@ -134,6 +160,7 @@ DifGui : DifEngine {
         // window.refresh;
         this.metadataView;
         // window.refresh;
+        curSR = library[model.source][\sampleRate];
     }
 
     draw {
