@@ -7,6 +7,7 @@
 DifGui : DifEngine {
 
     var model;
+    var <>onPlay, <>onStop;
     var playBtn, stopBtn, seekFwdBtn, seekBckBtn;
     var playlist, openBtn, mVolKnob;
     var window, sfView, sf;
@@ -71,15 +72,17 @@ DifGui : DifEngine {
         .action_({|btn| 
             if(model.isPlaying.not) { 
                 model.play; 
+                onPlay !? { onPlay.value }
             } { 
                 model.pause; 
+                // stop any running patterns (if any) from onPlay-value
             };
         });
         stopBtn = Button()
         .states_([[ "Stop", Color.white, colors[\buttonBg]]])
         .action_({ 
             model.stop; 
-            // model.position = 0 
+            onStop !? { onStop.value }
         });
         v.layout_(
             HLayout(seekBckBtn, playBtn, stopBtn)
