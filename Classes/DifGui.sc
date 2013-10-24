@@ -7,9 +7,10 @@
 DifGui : DifEngine {
 
     var model;
-    var playBtn, seekFwdBtn, seekBckBtn;
+    var playBtn, stopBtn, seekFwdBtn, seekBckBtn;
     var playlist, openBtn, mVolKnob;
-    var sfView, sf;
+    var window, sfView, sf;
+    var colors;
 
     *new {|aModel|
         ^super.new.initDifGui(aModel);
@@ -21,6 +22,13 @@ DifGui : DifEngine {
         // .elasticMode_(true)
         .gridOn_(true)
         .timeCursorOn_(true);
+        // color scheme
+        colors = (
+            buttonBg:   Color.grey,
+            sectionBg:  Color.grey(0.35, 1),
+            border:     Color.grey(0.2, 1),
+        );
+
         SimpleController(model)
         .put(\isPlaying, {|changer, what, bool|
             playBtn.value = bool;
