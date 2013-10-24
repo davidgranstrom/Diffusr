@@ -26,8 +26,10 @@ DifGui : DifEngine {
         .timeCursorOn_(true);
         // color scheme
         colors = (
+            windowBg:   Color.grey(0.25, 1),
             buttonBg:   Color.grey,
             sectionBg:  Color.grey(0.35, 1),
+            subSectionBg:  Color.grey(0.4, 1),
             border:     Color.grey(0.2, 1),
         );
 
@@ -107,10 +109,12 @@ DifGui : DifEngine {
                 frameCounter = StaticText().string_(try { model.position } { 0 })
             )
         );
-        v.layout_(
+        v.background_(colors[\sectionBg]).layout_(
             VLayout(
                 HLayout(seekBckBtn, playBtn, stopBtn),
-                HLayout(timeCounterView, frameCounterView)
+                View().background_(colors[\subSectionBg]).layout_(
+                    HLayout(timeCounterView, frameCounterView)
+                )
             );
         );
         ^v;
@@ -164,7 +168,7 @@ DifGui : DifEngine {
     }
 
     draw {
-        window = Window("Diffusr");
+        window = Window("Diffusr").background_(colors[\windowBg]);
         window.layout_(
             HLayout(
                 VLayout(
