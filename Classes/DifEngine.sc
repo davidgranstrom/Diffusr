@@ -10,7 +10,7 @@ DifEngine : DifLib {
     var <srcGroup, <diffuserGroup, <mainGroup;
     // internal
     var buses, src, bufSize, processors;
-    var gSyn, gCounter, cursorPos, playing;
+    var gSyn, gCounter, cursorPos, playing, killGroups;
 
     *new {|path, server|
         ^super.new.initDifEngine(path, server);
@@ -23,6 +23,7 @@ DifEngine : DifLib {
         buses          = List[];
         bufSize        = 2**19;
         this.isPlaying = false;
+        killGroups     = false;
         processors     = [ "bpf", "lpf", "hpf", "rm", "rev" ].collect{|str|
             ("dif_" ++ str).asSymbol;
         };
@@ -40,11 +41,20 @@ DifEngine : DifLib {
             };
             srcGroup      = Group.new(server);
             diffuserGroup = Group.after(srcGroup);
-            mainGroup     = Group.after(diffuserGroup);
+            // mainGroup     = Group.after(diffuserGroup);
+            // keep groups alive on cmd-period
+            SkipJack({
+                srcGroup = srcGroup ?? { Group.new(server) };
+                diffuserGroup = diffuserGroup ?? { Group.after(srcGroup) };
+            }, 0.5, killGroups, \dif_keepGroupsAlive);
             server.sync;
             this.makeDefs;
             server.sync;
         };
+        CmdPeriod.add({
+            srcGroup      = nil;
+            diffuserGroup = nil;
+        });
         if(singlePath.notNil) { this.source = singlePath };
     }
 
@@ -234,5 +244,9 @@ DifEngine : DifLib {
     free {
         buses.do(_.free);
         buses = nil;
+        killGroups = true;
+        srcGroup !? { srcGroup.free };
+        diffuserGroup !? { diffuserGroup.free };
+    }
     }
 }
