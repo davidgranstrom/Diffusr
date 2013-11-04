@@ -74,6 +74,7 @@ DifLib {
             d.add(\sampleRate   -> f.sampleRate);
             d.add(\numChannels  -> f.numChannels);
             d.add(\headerFormat -> f.headerFormat);
+            d.add(\sampleFormat -> f.sampleFormat);
         });
     }
 
