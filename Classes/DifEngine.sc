@@ -248,5 +248,9 @@ DifEngine : DifLib {
         srcGroup !? { srcGroup.free };
         diffuserGroup !? { diffuserGroup.free };
     }
+
+    doesNotUnderstand {|selector ... args|
+        var metadata = library[src][selector];
+        ^metadata ?? { ^super.doesNotUnderstand(selector, args) };
     }
 }
