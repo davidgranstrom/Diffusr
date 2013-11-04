@@ -62,11 +62,16 @@ DifEngine : DifLib {
         var d = library[name];
         d.put(\srcBus, Bus.audio(server, d[\numChannels]));
         buses.add(d[\srcBus]); // cleanup
-        SynthDef(("diffuser_" ++ name).asSymbol, {|out, buf, gate=1, loop=0|
+        SynthDef(("dif_" ++ name).asSymbol, {|out, buf, gate=1, loop=0|
             var env = EnvGen.kr(Env.asr(0.05, 1, 0.05, \sine), gate, doneAction:2);
             var o = VDiskIn.ar(d[\numChannels], buf, BufRateScale.kr(buf), loop);
             FreeSelfWhenDone.kr(o);
             Out.ar(out, env * o);
+        }).add;
+        SynthDef(\dif_src, {|out, amp=0.1, src, gate=1, atk=0.05, rel=0.05|
+            var env = EnvGen.kr(Env.asr(0.05, 1, 0.05, \sine), gate, doneAction:2);
+            var o = In.ar(src, d[\numChannels]);
+            Out.ar(out, env * amp * o);
         }).add;
     }
 
@@ -103,7 +108,7 @@ DifEngine : DifLib {
     makeEvents {
         var bus   = this.bus.index;
         var group = diffuserGroup;
-        (processors ++ \dif_plain).do {|type|
+        (processors ++ \dif_plain ++ \dif_src).do {|type|
             Event.addEventType(type, {|server|
                 // srv = server;
                 ~instrument = type;
@@ -193,11 +198,11 @@ DifEngine : DifLib {
                 server.sync;
                 syn = Synth.head(
                     srcGroup,
-                    ("diffuser_" ++ key).asSymbol,
+                    ("dif_" ++ key).asSymbol,
                     [\buf, buf, \out, out]
                 ).onFree {
                     buf.close; buf.free;
-                    this.isPlaying = false;
+                    this.eof;
                 };
                 gCounter = this.counter(
                     library[key][\sampleRate], 
@@ -239,6 +244,15 @@ DifEngine : DifLib {
                 this.changed(\hasStopped, true) 
             };
         }
+    }
+
+    eof {
+        gCounter.stop;
+        gCounter = nil;
+        this.isPlaying = false;
+        defer { 
+            this.changed(\hasStopped, true) 
+        };
     }
 
     free {
