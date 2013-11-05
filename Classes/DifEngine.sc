@@ -9,7 +9,7 @@ DifEngine : DifLib {
     var server, <ctrlDict;
     var <srcGroup, <diffuserGroup, <mainGroup;
     // internal
-    var buses, src, bufSize, processors;
+    var buses, masterVolBus, src, bufSize, processors;
     var gSyn, gCounter, cursorPos, playing, killGroups;
 
     *new {|path, server|
@@ -29,6 +29,10 @@ DifEngine : DifLib {
         };
         forkIfNeeded {
             server.bootSync; // boot
+            masterVolBus  = Bus.control(server, 1).set(1);
+            srcGroup      = Group.new(server);
+            diffuserGroup = Group.after(srcGroup);
+            server.sync;
             if(library.isEmpty.not) {
                 DifLib().files.do(this.prepare(_));
             } {
@@ -39,8 +43,6 @@ DifEngine : DifLib {
                     singlePath = name;
                 };
             };
-            srcGroup      = Group.new(server);
-            diffuserGroup = Group.after(srcGroup);
             // mainGroup     = Group.after(diffuserGroup);
             // keep groups alive on cmd-period
             SkipJack({
@@ -66,7 +68,7 @@ DifEngine : DifLib {
             var env = EnvGen.kr(Env.asr(0.05, 1, 0.05, \sine), gate, doneAction:2);
             var o = VDiskIn.ar(d[\numChannels], buf, BufRateScale.kr(buf), loop);
             FreeSelfWhenDone.kr(o);
-            Out.ar(out, env * o);
+            Out.ar(out, masterVolBus.kr * env * o);
         }).add;
         SynthDef(\dif_src, {|out, amp=0.1, src, gate=1, atk=0.05, rel=0.05|
             var env = EnvGen.kr(Env.asr(0.05, 1, 0.05, \sine), gate, doneAction:2);
@@ -141,6 +143,15 @@ DifEngine : DifLib {
                 updateRate.wait;
             }
         }
+    }
+
+    masterVol {
+        var db = masterVolBus.getSynchronous;
+        ^db; // .ampdb
+    }
+
+    masterVol_ {|dB|
+        masterVolBus.set(dB); // .dbamp
     }
 
     position {
